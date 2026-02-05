@@ -3,7 +3,6 @@ const {
     readSFSF_User,
     createEmployee,
     updateEmployee,
-    createItem,
     deleteChildren,
     deleteUnassignedEmployees,
     beforeSaveProject,
@@ -20,16 +19,22 @@ module.exports = cds.service.impl(async function () {
 
     this.on('READ', SFSF_User, readSFSF_User);
 
+    // Member
 
     this.before('CREATE', Member, createEmployee);
+    
     this.before('UPDATE', Member, updateEmployee);
-    this.before('DELETE', Project, deleteChildren);
-    this.before('DELETE', Member, deleteChildren);
-    this.before('SAVE', Project, beforeSaveProject);
-
-    this.after('CREATE', Member, createItem);
     this.after('UPDATE', Member, deleteUnassignedEmployees);
-    this.after('DELETE', Project, deleteUnassignedEmployees);
+    
+    this.before('DELETE', Member, deleteChildren);
     this.after('DELETE', Member, deleteUnassignedEmployees);
+    
+    // Project
+    
+    this.before('DELETE', Project, deleteChildren);
+    this.after('DELETE', Project, deleteUnassignedEmployees);
+    
+    this.before('SAVE', Project, beforeSaveProject);
     this.after('SAVE', Project, afterSaveProject);
+
 });

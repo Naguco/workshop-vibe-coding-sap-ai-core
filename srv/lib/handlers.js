@@ -2,12 +2,10 @@ const cds = require('@sap/cds');
 const namespace = 'sfsf.projman.model.db.';
 
 let userService = null;
-let assService = null;
 
 (async function () {
     // Connect to external SFSF OData services
     userService = await cds.connect.to('PLTUserManagement');
-    assService = await cds.connect.to('ECEmployeeProfile');
 })();
 
 /*** HELPERS ***/
@@ -55,30 +53,6 @@ async function executeUpdateEmployee(req, entity, entityID, userId) {
         // Member has changed, then:
         // Make sure there's an Employee entity for the new assignment
         await executeCreateEmployee(req, userId);
-
-        // Create new assignment
-        await createAssignment(req, entity, entityID, userId);
-    }
-    return req;
-}
-
-// Helper for assignment creation
-async function createAssignment(req, entity, entityID, userId) {
-    const columns =  m => { m.member_userId`as userId`, m.parent(p => { p.name`as name`, p.description`as description`, p.startDate`as startDate`, p.endDate`as endDate` }), m.role(r => { r.name`as role` }) };
-    const item = await cds.tx(req).run(SELECT.one.from(namespace + entity).columns(columns).where({ ID: { '=': entityID } }));
-    if (item) {
-        const assignment = {
-            userId: userId,
-            project: item.parent.name,
-            description: item.role.role + " of " + item.parent.description,
-            startDate: item.parent.startDate,
-            endDate: item.parent.endDate
-        };
-        console.log(assignment);
-        const element = await assService.tx(req).run(INSERT.into('Background_SpecialAssign').entries(assignment));
-        if (element) {
-            await cds.tx(req).run(UPDATE.entity(namespace + entity).with({ hasAssignment: true }).where({ ID: entityID }));
-        }
     }
     return req;
 }
@@ -115,18 +89,6 @@ async function createEmployee(req) {
             await executeCreateEmployee(req, userId);
         }
         return req;
-    } catch (err) {
-        req.error(err.code, err.message);
-    }
-}
-
-// After create: member
-async function createItem(data, req) {
-    try {
-        // Create assignment in SFSF
-        console.log('After create.');
-        await createAssignment(req, req.entity, data.ID, data.member_userId);
-        return data;
     } catch (err) {
         req.error(err.code, err.message);
     }
@@ -254,19 +216,6 @@ async function beforeSaveProject(req) {
 // After "save" project (exclusive for Fiori Draft support)
 async function afterSaveProject(data, req) {
     try {
-        if (data.team) {
-            // Look for members with unassigned elementId
-            let unassigned = await cds.tx(req).run(SELECT.from(namespace + 'Member').columns(['ID', 'member_userId']).where({ parent_ID: { '=': data.ID }, and: { hasAssignment: { '=': false } } }));
-            if (unassigned) {
-                // Make sure result is an array
-                unassigned = (unassigned.length === undefined) ? [unassigned] : unassigned;
-
-                // Create SFSF assignment
-                for (var i = 0; i < unassigned.length; i++) {
-                    await createAssignment(req, 'Member', unassigned[i].ID, unassigned[i].member_userId);
-                }
-            }
-        }
         await deleteUnassignedEmployees(data, req);
 
         return data;
@@ -278,7 +227,6 @@ async function afterSaveProject(data, req) {
 module.exports = {
     readSFSF_User,
     createEmployee,
-    createItem,
     updateEmployee,
     deleteChildren,
     deleteUnassignedEmployees,
