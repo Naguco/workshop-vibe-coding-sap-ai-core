@@ -12,4 +12,17 @@ describe('OData APIs', () => {
     ])
   })
 
+  it('serves SFSF_User from remote service', async () => {
+    const { data } = await GET `/projman/SFSF_User('jdoe')`
+    expect(data).to.containSubset({
+      "userId": "jdoe",
+      "defaultFullName": "John Doe",
+      "division": "N/A",
+      "department": "Sales",
+      "title": null,
+      "email": "john.doe@example.com",
+      "username": "jdoe"
+    })
+  })
+
 })

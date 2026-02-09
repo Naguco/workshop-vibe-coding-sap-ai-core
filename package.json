@@ -7,9 +7,9 @@
     "@sap-cloud-sdk/connectivity": "^3",
     "@sap-cloud-sdk/http-client": "^3",
     "@sap-cloud-sdk/resilience": "^3",
-    "@sap/cds": "^9",
-    "express": "^4",
-    "@sap/xssec": "^4"
+    "@sap/cds": "^9.7.1",
+    "@sap/xssec": "^4",
+    "express": "^4"
   },
   "devDependencies": {
     "@cap-js/cds-test": "^0.4.1",
@@ -22,7 +22,7 @@
     "start": "cds-serve",
     "watch-project1": "cds watch --open project1/index.html?sap-ui-xx-viewCache=false --livereload false",
     "watch-project2": "cds watch --open project2/index.html?sap-ui-xx-viewCache=false --livereload false",
-    "test": "jest --silent=true",
+    "test": "cds bind --exec -- jest --silent=true",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
@@ -61,7 +61,7 @@
           "kind": "odata-v2",
           "model": "srv/external/PLTUserManagement",
           "credentials": {
-            "url": "http://localhost:4004/PLTUserManagement/"
+            "destination": "PLTUserManagement"
           }
         },
         "[hybrid]": {
@@ -85,8 +85,7 @@
           },
           "kind": "destinations",
           "vcap": {
-            "name": "destinations",
-            "label": "destination"
+            "name": "destinations"
           }
         }
       },
